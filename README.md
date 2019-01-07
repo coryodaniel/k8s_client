@@ -19,14 +19,21 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/k8s](https://hexdocs.pm/k8s).
 
+## Notes
+
+Client path generation does not currently support:
+* `connect` operations
+* `scale` operations
+
+No plans to support *deprecated* `watch` functions.
 
 ## TODO
+# TODO: opts[]/validate_opts/2 vs function args macro :/
 
-* [ ] see example.ex
+* [ ] Client.*_path(map)
 * [ ] Naming: maximum length of 253 characters and consist of lower case alphanumeric characters, -, and .
 * [ ] Client: Encapsulate k8s conf, accept it as an argument too
 * [ ] Client: should it be compiled for a version or accept them at runtime
-* [ ] Client: include watch & connect in router, but not client for now...
 * [ ] CRD Monitor:
   * [ ] discover CRDs at runtime, or accept swagger for them.
   * [ ] Vs. Naive 'user is right' assumption. No pattern matching, just interpolating to make paths...
@@ -37,10 +44,16 @@ be found at [https://hexdocs.pm/k8s](https://hexdocs.pm/k8s).
   * [ ] K8s.Model `@preserve "deployment.kubernetes.io/revision"`
   * [ ] K8s.Model `@skip_parse "metadata.annotations"`
 
-    Client.create()
-    Client.create_path()
+Rule:
+```elixir
+definition = %{"kind" => "Deployment"}
+route = {IO, :puts, ["hello"]}
+rules = [%{def: definition, route: route}]
 
-    Client.list(deployment, all_namespaces: true)
-      This knows more than GET
-      Watch?
-    
+obj = %{"kind" => "Deployment", "apiVersion" => "v1"}
+
+what = Enum.find(rules, fn(%{def: definition, route: route}) ->
+  match?(obj, definition)
+end)
+
+```
