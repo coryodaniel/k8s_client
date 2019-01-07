@@ -32,49 +32,33 @@ defmodule K8s.Client.RouterTest do
     Enum.map(arg_names, fn arg -> arg_vals[arg] end)
   end
 
-  Enum.each(@route_info, fn {http_method, apis} ->
-    @http_method http_method
-    Enum.each(apis, fn {api_version, kinds} ->
-      @api_version api_version
-      Enum.each(kinds, fn {kind, details} ->
-        @kind kind
-        @details details
-        describe "#{@default_k8s_spec}: [#{@http_method}] #{@api_version} #{@kind}" do
-          test "generates the path" do
-            %{"method" => method, "path" => path_template} = @details
-            %{"api_version" => api_version, "kind" => kind} = @details
-            expected = expected_path(path_template)
+  Enum.each(@route_info, fn {operation_id, details} ->
+    @operation operation_id
+    @details details
+    describe "#{@default_k8s_spec} #{@operation}" do
+      test "path generated" do
+        %{"method" => method, "path" => path_template} = @details
+        %{"api_version" => api_version, "kind" => kind} = @details
+        expected = expected_path(path_template)
 
-            actual = apply(Router, String.to_atom(method), args)
-            actual
-            assert expected == actual
-          end
+        suffix = ~r/(status|scale)$/ |> Regex.scan(path_template) |> List.flatten |> List.last
+
+        base_args = [api_version, kind] ++ build_arg_list(path_template)
+
+        args = case suffix do
+          nil -> base_args
+          suffix -> base_args ++ [String.to_atom(suffix)]
         end
-      end)
-    end)
+
+        # raises on missing body/queryparam required - NO, client cares about bodies, not router
+        # allow query strings
+        # supports_all_namespaces = Regex.match?(~r/AllNamespaces$/, operation_id)
+        # # TODO: query string, body
+        # # path (no, pathshould be a part of the func args)
+        # # required params
+        actual = apply(Router, String.to_atom(method), args)
+        assert expected == actual
+      end
+    end
   end)
-
-  # describe "#{@default_k8s_spec} #{@operation}" do
-  #   test "path generated" do
-
-
-  #     suffix = ~r/(status|scale)$/ |> Regex.scan(path_template) |> List.flatten |> List.last
-
-  #     base_args = [api_version, kind] ++ build_arg_list(path_template)
-
-  #     args = case suffix do
-  #       nil -> base_args
-  #       suffix -> base_args ++ [String.to_atom(suffix)]
-  #     end
-
-  #     # raises on missing body/queryparam required - NO, client cares about bodies, not router
-  #     # allow query strings
-  #     # supports_all_namespaces = Regex.match?(~r/AllNamespaces$/, operation_id)
-  #     # # TODO: query string, body
-  #     # # path (no, pathshould be a part of the func args)
-  #     # # required params
-  #     actual = apply(Router, String.to_atom(method), args)
-  #     assert expected == actual
-  #   end
-  # end
 end
