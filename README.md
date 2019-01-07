@@ -28,9 +28,20 @@ Client path generation does not currently support:
 No plans to support *deprecated* `watch` functions.
 
 ## TODO
-# TODO: opts[]/validate_opts/2 vs function args macro :/
 
+```elixir
+K8s.models(:deployment) 
+[K8s.Models.Apps.V1.Deployment]
+
+K8s.Models.Apps.V1.Deployment.list_path(namespace: )
+K8s.list(:Deployment, namespace: :all, api_version: "apps/v1")
+K8s.create(%Deployment)
+K8s.status(%Deployment)
+```
+
+* [ ]opts[]/validate_opts/2 vs function args macro :/
 * [ ] Client.*_path(map)
+* [ ] remove conflict catcher...
 * [ ] Naming: maximum length of 253 characters and consist of lower case alphanumeric characters, -, and .
 * [ ] Client: Encapsulate k8s conf, accept it as an argument too
 * [ ] Client: should it be compiled for a version or accept them at runtime

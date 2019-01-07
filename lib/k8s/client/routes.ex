@@ -11,18 +11,21 @@ defmodule K8s.Client.Routes do
   Generates route information from a swagger spec.
   """
   @spec build(binary()) :: map()
-  def build(file) do
-    spec = file |> File.read!() |> Jason.decode!()
+  def build(file) when is_binary(file) do
+    file |> File.read!() |> Jason.decode!() |> build
+  end
 
-    spec["paths"]
+  @spec build(map) :: map()
+  def build(%{"paths" => paths}) when is_map(paths) do
+    paths
     |> Enum.reduce(%{}, fn {path, operations}, agg ->
       Map.merge(agg, route_details(operations, path), fn key, v1, v2 ->
-        v2
-
-        # raise K8s.Client.Routes.KeyGenerationError, message: "Conflicting key generated #{key}\n#{inspect(v1)}\n#{inspect(v2)}"
+        raise K8s.Client.Routes.KeyGenerationError, message: "Conflicting key generated #{key}\n#{inspect(v1)}\n#{inspect(v2)}"
       end)
     end)
   end
+
+  def build(_), do: %{}
 
   defp api_version("", version), do: version
   defp api_version(group, version), do: "#{group}/#{version}"
@@ -62,6 +65,7 @@ defmodule K8s.Client.Routes do
         Map.has_key?(operation, "x-kubernetes-group-version-kind"),
         # Skip `connect` operations
         operation["x-kubernetes-action"] != "connect",
+        operation["x-kubernetes-group-version-kind"]["kind"] != "Scale",
         # skip deprecated watch paths
         !Regex.match?(~r/\/watch\//, path),
         into: %{},
