@@ -1,11 +1,11 @@
-defmodule K8s.Codegen do
+defmodule K8s.Client.Routes do
   @moduledoc false
 
   @doc """
   Generates route information from a swagger spec.
   """
-  @spec route_info(binary()) :: map()
-  def route_info(file) do
+  @spec build(binary()) :: map()
+  def build(file) do
     spec = file |> File.read!() |> Jason.decode!()
 
     Enum.reduce(spec["paths"], %{}, fn {path, operations}, agg ->

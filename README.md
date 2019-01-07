@@ -36,3 +36,11 @@ be found at [https://hexdocs.pm/k8s](https://hexdocs.pm/k8s).
 * [ ] "inflecting?"
   * [ ] K8s.Model `@preserve "deployment.kubernetes.io/revision"`
   * [ ] K8s.Model `@skip_parse "metadata.annotations"`
+
+    Client.create()
+    Client.create_path()
+
+    Client.list(deployment, all_namespaces: true)
+      This knows more than GET
+      Watch?
+    
