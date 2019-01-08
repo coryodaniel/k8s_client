@@ -84,7 +84,7 @@ defmodule K8s.Client.Routes do
 
   defp metadata_tuple(operation, http_method, path, path_params) do
     details = metadata(operation, http_method, path, path_params)
-    {generate_route_key(details), details}
+    {details["id"], details}
   end
 
   defp generate_route_key(details) do
