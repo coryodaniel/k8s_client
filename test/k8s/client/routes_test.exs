@@ -1,6 +1,6 @@
-defmodule K8s.Client.Test do
+defmodule K8s.Client.RoutesTest do
   use ExUnit.Case
-  alias K8s.Client
+  alias K8s.Client.Routes
   alias K8s.Client.Swagger
 
   @default_k8s_spec System.get_env("K8S_SPECS") || "priv/swagger/1.13.json"
@@ -16,7 +16,7 @@ defmodule K8s.Client.Test do
   end
 
   def path_opts(op) do
-    # Send all the opts, K8s.Client.generate_path/2 will only use the ones it needs
+    # Send all the opts, routes will only use the opts it needs
     case Regex.match?(~r/AllNamespaces/, op["operationId"]) do
       true -> [namespace: :all, name: "bar", path: "pax", logpath: "qux"]
       false -> [namespace: "foo", name: "bar", path: "pax", logpath: "qux"]
@@ -35,9 +35,9 @@ defmodule K8s.Client.Test do
     opts = path_opts(op)
 
     if opts[:namespace] == :all do
-      Client.list_all_namespaces(api_version, kind, opts)
+      Routes.list_all_namespaces(api_version, kind, opts)
     else
-      Client.list(api_version, kind, opts)
+      Routes.list(api_version, kind, opts)
     end
   end
 
@@ -46,7 +46,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.post(api_version, kind, path_opts(op))
+    Routes.post(api_version, kind, path_opts(op))
   end
 
   def actual_delete(op) do
@@ -54,7 +54,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.delete(api_version, kind, path_opts(op))
+    Routes.delete(api_version, kind, path_opts(op))
   end
 
   def actual_deletecollection(op) do
@@ -62,7 +62,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.delete_collection(api_version, kind, path_opts(op))
+    Routes.delete_collection(api_version, kind, path_opts(op))
   end
 
   def actual_get(op) do
@@ -70,7 +70,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.get(api_version, kind, path_opts(op))
+    Routes.get(api_version, kind, path_opts(op))
   end
 
   def actual_get_log(op) do
@@ -78,7 +78,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.get_log(api_version, kind, path_opts(op))
+    Routes.get_log(api_version, kind, path_opts(op))
   end
 
   def actual_get_status(op) do
@@ -86,7 +86,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.get_status(api_version, kind, path_opts(op))
+    Routes.get_status(api_version, kind, path_opts(op))
   end
 
   def actual_put(op) do
@@ -94,7 +94,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.put(api_version, kind, path_opts(op))
+    Routes.put(api_version, kind, path_opts(op))
   end
 
   def actual_patch(op) do
@@ -102,7 +102,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.patch(api_version, kind, path_opts(op))
+    Routes.patch(api_version, kind, path_opts(op))
   end
 
   def actual_patch_status(op) do
@@ -110,7 +110,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.patch_status(api_version, kind, path_opts(op))
+    Routes.patch_status(api_version, kind, path_opts(op))
   end
 
   def actual_put_status(op) do
@@ -118,7 +118,7 @@ defmodule K8s.Client.Test do
       op["x-kubernetes-group-version-kind"]
 
     api_version = api_version(group, version)
-    Client.put_status(api_version, kind, path_opts(op))
+    Routes.put_status(api_version, kind, path_opts(op))
   end
 
   # Skips /watch/ Deprecated URLs
@@ -133,7 +133,7 @@ defmodule K8s.Client.Test do
       @http_method http_method
       @operation operation
       @operation_id @operation["operationId"]
-      @client_function @operation["x-kubernetes-action"]
+      @route_function @operation["x-kubernetes-action"]
 
       # Skips finalize|bindings|approval|scale paths, connect, and operations w/o k8s group-version-kind
       if !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, @path) &&
@@ -145,8 +145,8 @@ defmodule K8s.Client.Test do
 
             test_function =
               case Swagger.subaction(@path) do
-                nil -> "actual_#{@client_function}"
-                subaction -> "actual_#{@client_function}_#{subaction}"
+                nil -> "actual_#{@route_function}"
+                subaction -> "actual_#{@route_function}_#{subaction}"
               end
 
             actual = apply(__MODULE__, String.to_atom(test_function), [@operation])
