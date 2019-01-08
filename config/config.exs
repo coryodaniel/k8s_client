@@ -2,7 +2,7 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-config :k8s, specs: [
+config :k8s_client, specs: [
   "priv/swagger/1.13.json",
   "priv/custom/example.json"
 ]

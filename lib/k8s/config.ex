@@ -2,7 +2,7 @@ defmodule K8s.Config do
   @doc """
   Returns a list of swagger specs to compile using.
 
-  Can be set via `config :k8s, specs: ["priv/swagger/1.13.json"]` or via `K8S_SPECS`
+  Can be set via `config :k8s_client, specs: ["priv/swagger/1.13.json"]` or via `K8S_SPECS`
 
   Swagger specs will be merged together by operationId.
 
@@ -18,7 +18,7 @@ defmodule K8s.Config do
   def specs() do
     case System.get_env("K8S_SPECS") do
       spec when is_binary(spec) -> String.split(spec, ",")
-      nil -> Application.get_env(:k8s, :specs)
+      nil -> Application.get_env(:k8s_client, :specs)
     end
   end
 end
