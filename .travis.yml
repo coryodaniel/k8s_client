@@ -6,7 +6,7 @@ otp_release:
   - 20.3
 before_script:
   - mix deps.get --only test
-script: make test/all
+script: mix coveralls.travis
 notifications:
   recipients:
     - travis@coryodaniel.com

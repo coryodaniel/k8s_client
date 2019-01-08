@@ -16,9 +16,9 @@ defmodule K8s.Client.Codegen do
         Map.merge(acc, Swagger.build(spec))
       end)
 
-    for {name, metadata} <- operations do
-      path_with_args = metadata["path"]
+    for {_name, metadata} <- operations do
       _method = metadata["method"]
+      path_with_args = metadata["path"]
       kind = metadata["kind"]
       api_version = metadata["api_version"]
 
@@ -39,14 +39,9 @@ defmodule K8s.Client.Codegen do
               opts
             ) do
           case valid_opts?(unquote(arg_names), opts) do
-            :ok -> unquote(:"op_path_#{name}")() |> replace_path_vars(opts)
+            :ok -> replace_path_vars(unquote(path_with_args), opts)
             error -> error
           end
-        end
-
-        # Private operation/path method
-        defp unquote(:"op_path_#{name}")() do
-          unquote(path_with_args)
         end
       end
     end
