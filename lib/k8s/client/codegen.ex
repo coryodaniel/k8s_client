@@ -27,6 +27,10 @@ defmodule K8s.Client.Codegen do
           unquote(:"#{header_func}")(v, k, [namespace: ns, name: name])
         end
 
+        def unquote(:"#{header_func}")(%{"apiVersion" => v, "kind" => k, "metadata" => %{"name" => name, "namespace" => ns}}) do
+          unquote(:"#{header_func}")(v, k, [namespace: ns, name: name])
+        end
+
         def unquote(:"#{header_func}")(%{"apiVersion" => v, "kind" => k, "metadata" => %{"namespace" => ns}}) do
           unquote(:"#{header_func}")(v, k, [namespace: ns])
         end

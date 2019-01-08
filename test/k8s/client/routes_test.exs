@@ -27,7 +27,7 @@ defmodule K8s.Client.RoutesTest do
   def api_version("", version), do: version
   def api_version(group, version), do: "#{group}/#{version}"
 
-  def actual_list(op) do
+  def fn_to_test_for__list(op) do
     opts = path_opts(op)
 
     if opts[:namespace] == :all do
@@ -37,43 +37,43 @@ defmodule K8s.Client.RoutesTest do
     end
   end
 
-  def actual_post(_operation) do
+  def fn_to_test_for__post(_operation) do
     :post
   end
 
-  def actual_delete(_operation) do
+  def fn_to_test_for__delete(_operation) do
     :delete
   end
 
-  def actual_deletecollection(_operation) do
+  def fn_to_test_for__deletecollection(_operation) do
     :delete_collection
   end
 
-  def actual_get(_operation) do
+  def fn_to_test_for__get(_operation) do
     :get
   end
 
-  def actual_get_log(_operation) do
+  def fn_to_test_for__get_log(_operation) do
     :get_log
   end
 
-  def actual_get_status(_operation) do
+  def fn_to_test_for__get_status(_operation) do
     :get_status
   end
 
-  def actual_put(_operation) do
+  def fn_to_test_for__put(_operation) do
     :put
   end
 
-  def actual_patch(_operation) do
+  def fn_to_test_for__patch(_operation) do
     :patch
   end
 
-  def actual_patch_status(_operation) do
+  def fn_to_test_for__patch_status(_operation) do
     :patch_status
   end
 
-  def actual_put_status(_operation) do
+  def fn_to_test_for__put_status(_operation) do
     :put_status
   end
 
@@ -119,8 +119,8 @@ defmodule K8s.Client.RoutesTest do
 
             test_function =
               case Swagger.subaction(@path) do
-                nil -> "actual_#{@route_function}"
-                subaction -> "actual_#{@route_function}_#{subaction}"
+                nil -> "fn_to_test_for__#{@route_function}"
+                subaction -> "fn_to_test_for__#{@route_function}_#{subaction}"
               end
 
             function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
@@ -134,8 +134,8 @@ defmodule K8s.Client.RoutesTest do
 
             test_function =
               case Swagger.subaction(@path) do
-                nil -> "actual_#{@route_function}"
-                subaction -> "actual_#{@route_function}_#{subaction}"
+                nil -> "fn_to_test_for__#{@route_function}"
+                subaction -> "fn_to_test_for__#{@route_function}_#{subaction}"
               end
 
             function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
@@ -160,16 +160,4 @@ defmodule K8s.Client.RoutesTest do
     result = Routes.post("apps/v9000", "Deployment", [])
     assert {:error, "No kubernetes operation for Deployment(apps/v9000); Options: []"}
   end
-
-  # test "given an arbitrary struct, renders the path" do
-  #   deployment = %MyDeployment{
-  #     apiVersion: "apps/v1",
-  #     kind: "Deployment",
-  #     metadata: %{
-  #       namespace: "default"
-  #     }
-  #   }
-  #
-  #   assert "/apis/apps/v1/deployments/default" == Routes.post(deployment)
-  # end
 end
