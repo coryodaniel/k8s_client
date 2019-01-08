@@ -1,5 +1,4 @@
 defmodule K8s.Client do
-  require K8s.Codegen.Client
   use K8s.Codegen.Client
 
   # @path_opts [:name, :namespace]
