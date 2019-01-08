@@ -54,10 +54,11 @@ defmodule K8s.Client.RouteData do
     id = operation["operationId"]
     action = operation["x-kubernetes-action"]
 
-    action = case subaction(path) do
-      nil -> "#{action}"
-      subaction -> "#{action}_#{subaction}"
-    end
+    action =
+      case subaction(path) do
+        nil -> "#{action}"
+        subaction -> "#{action}_#{subaction}"
+      end
 
     %{
       "action" => action,
@@ -89,7 +90,9 @@ defmodule K8s.Client.RouteData do
         # Skip deprecated watch paths; no plan to support
         !Regex.match?(~r/\/watch\//, path),
         into: %{},
-        do: {operation["operationId"], metadata(operation, http_method, path, operations["parameters"])}
+        do:
+          {operation["operationId"],
+           metadata(operation, http_method, path, operations["parameters"])}
   end
 
   @doc """
@@ -97,8 +100,8 @@ defmodule K8s.Client.RouteData do
   """
   def subaction(path) do
     ~r/\/(log|status)$/
-      |> Regex.scan(path)
-      |> Enum.map(fn(matches) -> List.last(matches) end)
-      |> List.first
+    |> Regex.scan(path)
+    |> Enum.map(fn matches -> List.last(matches) end)
+    |> List.first()
   end
 end

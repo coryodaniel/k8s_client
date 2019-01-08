@@ -11,9 +11,10 @@ defmodule K8s.Client.Codegen do
 
   @doc false
   defmacro __before_compile__(_env) do
-    operations = Enum.reduce(RouteData.specs(), %{}, fn spec, acc ->
-      Map.merge(acc, RouteData.build(spec))
-    end)
+    operations =
+      Enum.reduce(RouteData.specs(), %{}, fn spec, acc ->
+        Map.merge(acc, RouteData.build(spec))
+      end)
 
     for {name, metadata} <- operations do
       path_with_args = metadata["path"]
@@ -22,6 +23,7 @@ defmodule K8s.Client.Codegen do
       api_version = metadata["api_version"]
 
       matches = Regex.scan(~r/{([a-z]+)}/, path_with_args)
+
       arg_names =
         Enum.map(matches, fn match ->
           match |> List.last() |> String.to_atom()
@@ -31,7 +33,11 @@ defmodule K8s.Client.Codegen do
       func_name = gen_func_name(metadata)
 
       quote do
-        def unquote(:"#{func_name}")(api_version = unquote(api_version), kind = unquote(kind), opts) do
+        def unquote(:"#{func_name}")(
+              api_version = unquote(api_version),
+              kind = unquote(kind),
+              opts
+            ) do
           case valid_opts?(unquote(arg_names), opts) do
             :ok -> unquote(:"op_path_#{name}")() |> replace_path_vars(opts)
             error -> error
@@ -71,6 +77,7 @@ defmodule K8s.Client.Codegen do
   @spec valid_opts?([atom()], keyword(atom())) :: :ok | {:error, binary()}
   def valid_opts?(expected, opts) do
     actual = Keyword.keys(opts)
+
     case expected -- actual do
       [] -> :ok
       missing -> {:error, "Missing required option: #{Enum.join(missing, ",")}"}
@@ -88,6 +95,8 @@ defmodule K8s.Client.Codegen do
   """
   @spec replace_path_vars(binary(), keyword(atom())) :: binary()
   def replace_path_vars(path_template, opts) do
-    Regex.replace(~r/\{(\w+?)\}/, path_template, fn _, var -> opts[String.to_existing_atom(var)] end)
+    Regex.replace(~r/\{(\w+?)\}/, path_template, fn _, var ->
+      opts[String.to_existing_atom(var)]
+    end)
   end
 end
