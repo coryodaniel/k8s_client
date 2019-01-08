@@ -3,7 +3,4 @@
 use Mix.Config
 
 config :k8s_client,
-  specs: [
-    "priv/swagger/1.13.json",
-    "priv/custom/example.json"
-  ]
+  specs: ["priv/swagger/1.13.json"]

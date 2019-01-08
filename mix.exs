@@ -41,6 +41,7 @@ defmodule K8s.MixProject do
     [
       {:httpoison, "~> 1.5"},
       {:jason, "~> 1.1"},
+      {:k8s_conf, "~> 0.1"},
 
       # Dev dependencies
       {:mix_test_watch, "~> 0.8", only: :dev, runtime: false},
