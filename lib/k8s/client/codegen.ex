@@ -16,21 +16,38 @@ defmodule K8s.Client.Codegen do
         Map.merge(acc, Swagger.build(spec))
       end)
 
-    for {_name, metadata} <- operations do
+    func_names =
+      operations
+      |> Enum.map(fn {_name, metadata} -> gen_func_name(metadata) end)
+      |> Enum.uniq
+
+    header_funcs = for header_func <- func_names do
+      quote do
+        def unquote(:"#{header_func}")(%{"apiVersion" => v, "kind" => k, "metadata" => %{"name" => name, "namespace" => ns}}) do
+          unquote(:"#{header_func}")(v, k, [namespace: ns, name: name])
+        end
+
+        def unquote(:"#{header_func}")(%{"apiVersion" => v, "kind" => k, "metadata" => %{"namespace" => ns}}) do
+          unquote(:"#{header_func}")(v, k, [namespace: ns])
+        end
+
+        def unquote(:"#{header_func}")(%{"apiVersion" => v, "kind" => k}) do
+          unquote(:"#{header_func}")(v, k, [])
+        end
+      end
+    end
+
+    funcs = for {_name, metadata} <- operations do
       _method = metadata["method"]
       path_with_args = metadata["path"]
       kind = metadata["kind"]
       api_version = metadata["api_version"]
-
-      matches = Regex.scan(~r/{([a-z]+)}/, path_with_args)
+      func_name = gen_func_name(metadata)
 
       arg_names =
-        Enum.map(matches, fn match ->
-          match |> List.last() |> String.to_atom()
-          # |> Macro.var(__MODULE__)
-        end)
-
-      func_name = gen_func_name(metadata)
+        ~r/{([a-z]+)}/
+        |> Regex.scan(path_with_args)
+        |> Enum.map(fn match -> match |> List.last() |> String.to_atom() end)
 
       quote do
         def unquote(:"#{func_name}")(
@@ -45,6 +62,16 @@ defmodule K8s.Client.Codegen do
         end
       end
     end
+
+    base_case_funcs = for base_case_func <- func_names do
+      quote do
+        def unquote(:"#{base_case_func}")(api_version, kind, opts) do
+          {:error, "No kubernetes operation for #{kind}(#{api_version}); Options: #{inspect(opts)}"}
+        end
+      end
+    end
+
+    header_funcs ++ funcs ++ base_case_funcs
   end
 
   @doc """

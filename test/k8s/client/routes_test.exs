@@ -28,97 +28,71 @@ defmodule K8s.Client.RoutesTest do
   def api_version(group, version), do: "#{group}/#{version}"
 
   def actual_list(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
     opts = path_opts(op)
 
     if opts[:namespace] == :all do
-      Routes.list_all_namespaces(api_version, kind, opts)
+      :list_all_namespaces
     else
-      Routes.list(api_version, kind, opts)
+      :list
     end
   end
 
-  def actual_post(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.post(api_version, kind, path_opts(op))
+  def actual_post(_operation) do
+    :post
   end
 
-  def actual_delete(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.delete(api_version, kind, path_opts(op))
+  def actual_delete(_operation) do
+    :delete
   end
 
-  def actual_deletecollection(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.delete_collection(api_version, kind, path_opts(op))
+  def actual_deletecollection(_operation) do
+    :delete_collection
   end
 
-  def actual_get(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.get(api_version, kind, path_opts(op))
+  def actual_get(_operation) do
+    :get
   end
 
-  def actual_get_log(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.get_log(api_version, kind, path_opts(op))
+  def actual_get_log(_operation) do
+    :get_log
   end
 
-  def actual_get_status(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.get_status(api_version, kind, path_opts(op))
+  def actual_get_status(_operation) do
+    :get_status
   end
 
-  def actual_put(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.put(api_version, kind, path_opts(op))
+  def actual_put(_operation) do
+    :put
   end
 
-  def actual_patch(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.patch(api_version, kind, path_opts(op))
+  def actual_patch(_operation) do
+    :patch
   end
 
-  def actual_patch_status(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    api_version = api_version(group, version)
-    Routes.patch_status(api_version, kind, path_opts(op))
+  def actual_patch_status(_operation) do
+    :patch_status
   end
 
-  def actual_put_status(op) do
+  def actual_put_status(_operation) do
+    :put_status
+  end
+
+  def operation_to_map(op) do
     %{"version" => version, "group" => group, "kind" => kind} =
       op["x-kubernetes-group-version-kind"]
 
-    api_version = api_version(group, version)
-    Routes.put_status(api_version, kind, path_opts(op))
+    path_opts = path_opts(op)
+
+    metadata = case path_opts[:namespace] do
+      :all -> %{"name" => path_opts[:name]}
+      other -> %{"namespace" => other, "name" => path_opts[:name]}
+    end
+
+    %{
+      "apiVersion" => api_version(group, version),
+      "kind" => kind,
+      "metadata" => metadata
+    }
   end
 
   # Skips /watch/ Deprecated URLs
@@ -140,7 +114,7 @@ defmodule K8s.Client.RoutesTest do
            Map.has_key?(@operation, "x-kubernetes-group-version-kind") &&
            @operation["x-kubernetes-action"] != "connect" do
         describe "#{@default_k8s_spec}: #{@operation_id} [#{@http_method}] #{@path}" do
-          test "generates the path" do
+          test "given a map, renders the path" do
             expected = expected_path(@path)
 
             test_function =
@@ -149,11 +123,53 @@ defmodule K8s.Client.RoutesTest do
                 subaction -> "actual_#{@route_function}_#{subaction}"
               end
 
-            actual = apply(__MODULE__, String.to_atom(test_function), [@operation])
-            assert expected == actual
+            function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
+
+            map = operation_to_map(@operation)
+            assert expected == apply(Routes, function_under_test, [map])
+          end
+
+          test "given path components, renders the path" do
+            expected = expected_path(@path)
+
+            test_function =
+              case Swagger.subaction(@path) do
+                nil -> "actual_#{@route_function}"
+                subaction -> "actual_#{@route_function}_#{subaction}"
+              end
+
+            function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
+
+            %{"version" => version, "group" => group, "kind" => kind} = @operation["x-kubernetes-group-version-kind"]
+            api_version = api_version(group, version)
+            path_opts = path_opts(@operation)
+
+            assert expected == apply(Routes, function_under_test, [api_version, kind, path_opts])
           end
         end
       end
     end)
   end)
+
+  test "returns error when missing required path arguments" do
+    result = Routes.post("apps/v1", "Deployment", [])
+    assert {:error, "Missing required option: namespace"} = result
+  end
+
+  test "returns error when operation not supported" do
+    result = Routes.post("apps/v9000", "Deployment", [])
+    assert {:error, "No kubernetes operation for Deployment(apps/v9000); Options: []"}
+  end
+
+  # test "given an arbitrary struct, renders the path" do
+  #   deployment = %MyDeployment{
+  #     apiVersion: "apps/v1",
+  #     kind: "Deployment",
+  #     metadata: %{
+  #       namespace: "default"
+  #     }
+  #   }
+  #
+  #   assert "/apis/apps/v1/deployments/default" == Routes.post(deployment)
+  # end
 end
