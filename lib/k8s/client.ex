@@ -1,3 +1,7 @@
 defmodule K8s.Client do
-  use K8s.Codegen.Client
+  @moduledoc """
+  An experimental k8s client
+  """
+
+  use K8s.Client.Codegen
 end
