@@ -27,23 +27,24 @@ defmodule K8s.Codegen.Client do
           match |> List.last() |> String.to_atom() |> Macro.var(__MODULE__)
         end)
 
-      # if length(arg_names) > 0 do
-      #   quote do
-      #     def unquote(:"#{action}")(api_version = unquote(api_version), kind = unquote(kind), unquote_splicing(arg_names)) do
-      #       IO.puts "HTTP: #{unquote(method)}"
-      #       unquote(:"op_path_#{name}")()
-      #       |> replace_path_vars([namespace: "default"])
-      #     end
-      #   end
-      # end
+      if length(arg_names) > 0 do
+        quote do
+          def unquote(:"#{action}")(api_version = unquote(api_version), kind = unquote(kind)) do
+            {:error, "Missing required arg {namespace}"}
+          end
+        end
+      else
+        quote do
+          def unquote(:"#{action}")(api_version = unquote(api_version), kind = unquote(kind), opts) do
+            IO.puts "HTTP: #{unquote(method)}"
+            unquote(:"op_path_#{name}")()
+            |> replace_path_vars(opts)
+          end
+        end
+      end
 
       quote do
-        def unquote(:"#{action}")(api_version = unquote(api_version), kind = unquote(kind), unquote_splicing(arg_names)) do
-          IO.puts "HTTP: #{unquote(method)}"
-          unquote(:"op_path_#{name}")()
-          |> replace_path_vars([namespace: "default"])
-        end
-
+        # Private operation/path method
         defp unquote(:"op_path_#{name}")() do
           unquote(path_with_args)
         end
