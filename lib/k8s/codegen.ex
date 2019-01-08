@@ -1,6 +1,6 @@
 defmodule K8s.Client.Codegen do
   @doc false
-  alias K8s.Client.RouteData
+  alias K8s.Client.Swagger
 
   defmacro __using__(_opts) do
     quote do
@@ -12,8 +12,8 @@ defmodule K8s.Client.Codegen do
   @doc false
   defmacro __before_compile__(_env) do
     operations =
-      Enum.reduce(RouteData.specs(), %{}, fn spec, acc ->
-        Map.merge(acc, RouteData.build(spec))
+      Enum.reduce(Swagger.specs(), %{}, fn spec, acc ->
+        Map.merge(acc, Swagger.build(spec))
       end)
 
     for {name, metadata} <- operations do

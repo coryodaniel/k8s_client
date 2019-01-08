@@ -1,4 +1,4 @@
-defmodule K8s.Client.RouteData do
+defmodule K8s.Client.Swagger do
   @moduledoc """
   Generates route information from a swagger spec.
   """
@@ -14,7 +14,7 @@ defmodule K8s.Client.RouteData do
 
   ## Examples
 
-      iex> K8s.Client.RouteData.specs()
+      iex> K8s.Client.Swagger.specs()
       ["priv/swagger/1.13.json"]
 
   """

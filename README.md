@@ -37,3 +37,7 @@ Client path generation does not currently support:
 No plans to support *deprecated* `watch` functions.
 
 See a full list of removed operations [here](./lib/client/route_data.ex#L53-L70).
+
+## TODO
+
+* [ ] build docs / examples for macro built functions

@@ -1,7 +1,7 @@
 defmodule K8s.Client.Test do
   use ExUnit.Case
   alias K8s.Client
-  alias K8s.Client.RouteData
+  alias K8s.Client.Swagger
 
   @default_k8s_spec System.get_env("K8S_SPECS") || "priv/swagger/1.13.json"
   @swagger Jason.decode!(File.read!(@default_k8s_spec))
@@ -144,7 +144,7 @@ defmodule K8s.Client.Test do
             expected = expected_path(@path)
 
             test_function =
-              case RouteData.subaction(@path) do
+              case Swagger.subaction(@path) do
                 nil -> "actual_#{@client_function}"
                 subaction -> "actual_#{@client_function}_#{subaction}"
               end
