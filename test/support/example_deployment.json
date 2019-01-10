@@ -1,0 +1,21 @@
+{
+	"apiVersion": "apps/v1",
+	"kind": "Deployment",
+	"metadata": {
+    "name": "kewl",
+    "namespace": "default"
+	},
+	"spec": {
+		"replicas": 1,
+		"template": {
+			"spec": {
+				"containers": [
+					{
+						"image": "kewl-app",
+						"name": "kewl-app"
+					}
+				]
+			}
+		}
+	}
+}

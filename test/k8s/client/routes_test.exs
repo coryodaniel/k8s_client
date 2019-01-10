@@ -1,5 +1,5 @@
 defmodule K8s.Client.RoutesTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias K8s.Client.Routes
   alias K8s.Client.Swagger
 
@@ -83,10 +83,11 @@ defmodule K8s.Client.RoutesTest do
 
     path_opts = path_opts(op)
 
-    metadata = case path_opts[:namespace] do
-      :all -> %{"name" => path_opts[:name]}
-      other -> %{"namespace" => other, "name" => path_opts[:name]}
-    end
+    metadata =
+      case path_opts[:namespace] do
+        :all -> %{"name" => path_opts[:name]}
+        other -> %{"namespace" => other, "name" => path_opts[:name]}
+      end
 
     %{
       "apiVersion" => api_version(group, version),
@@ -140,7 +141,9 @@ defmodule K8s.Client.RoutesTest do
 
             function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
 
-            %{"version" => version, "group" => group, "kind" => kind} = @operation["x-kubernetes-group-version-kind"]
+            %{"version" => version, "group" => group, "kind" => kind} =
+              @operation["x-kubernetes-group-version-kind"]
+
             api_version = api_version(group, version)
             path_opts = path_opts(@operation)
 
@@ -153,11 +156,11 @@ defmodule K8s.Client.RoutesTest do
 
   test "returns error when missing required path arguments" do
     result = Routes.post("apps/v1", "Deployment", [])
-    assert {:error, "Missing required option: namespace"} = result
+    assert {:error, "Missing required parameter: namespace"} = result
   end
 
   test "returns error when operation not supported" do
     result = Routes.post("apps/v9000", "Deployment", [])
-    assert {:error, "No kubernetes operation for Deployment(apps/v9000); Options: []"}
+    assert {:error, "No kubernetes operation for Deployment(apps/v9000); Options: []"} = result
   end
 end
