@@ -29,6 +29,8 @@ be found at [https://hexdocs.pm/k8s](https://hexdocs.pm/k8s).
 
 ## Notes
 
+K8s.Client never assumes the "default" namespace. A namespace is always required when applicable to an operation.
+
 Client path generation does not currently support:
 * `connect` operations
 * `scale` operations
@@ -36,4 +38,4 @@ Client path generation does not currently support:
 
 No plans to support *deprecated* `watch` functions.
 
-See a full list of removed operations [here](./lib/client/route_data.ex#L53-L70).
+See a full list of removed operations [here](./lib/k8s/client/swagger.ex#L81-L91).

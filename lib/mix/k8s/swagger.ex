@@ -1,4 +1,7 @@
 defmodule Mix.Tasks.K8s.Swagger do
+  @moduledoc """
+  Download a kubernetes swagger spec.
+  """
   use Mix.Task
 
   @switches [version: :string]

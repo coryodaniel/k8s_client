@@ -1,6 +1,6 @@
-defmodule K8s.Client.Request do
+defmodule K8s.Client.Operation do
   @moduledoc """
-  Encapsulates a k8s HTTP Request
+  Encapsulates a k8s HTTP operation
   """
   @type t :: %__MODULE__{
           method: atom(),
