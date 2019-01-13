@@ -3,7 +3,7 @@ defmodule K8s.Client.RoutesTest do
   alias K8s.Client.Routes
   alias K8s.Client.Swagger
 
-  @default_k8s_spec System.get_env("K8S_SPECS") || "priv/swagger/1.13.json"
+  @default_k8s_spec System.get_env("K8S_SPEC") || "priv/swagger/1.13.json"
   @swagger Jason.decode!(File.read!(@default_k8s_spec))
 
   # Interpolates path variables {path, namespace, name, logpath}
@@ -94,6 +94,24 @@ defmodule K8s.Client.RoutesTest do
       "kind" => kind,
       "metadata" => metadata
     }
+  end
+
+  describe "proper_kind_name/1" do
+    test "accepts a constant-style string" do
+      assert "Deployment" == Routes.proper_kind_name("Deployment")
+    end
+
+    test "accepts a constant-style atom" do
+      assert "Deployment" == Routes.proper_kind_name(:Deployment)
+    end
+
+    test "accepts a downcased string" do
+      assert "Deployment" == Routes.proper_kind_name("deployment")
+    end
+
+    test "accepts a downcased atom" do
+      assert "Deployment" == Routes.proper_kind_name(:deployment)
+    end
   end
 
   # Skips /watch/ Deprecated URLs

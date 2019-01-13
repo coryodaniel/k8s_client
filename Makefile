@@ -14,4 +14,4 @@ priv/swagger/%.json:
 
 test/%:
 	$(MAKE) priv/swagger/$*.json
-	K8S_SPECS=priv/swagger/$*.json mix test
+	K8S_SPEC=priv/swagger/$*.json mix test

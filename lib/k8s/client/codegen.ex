@@ -2,6 +2,8 @@ defmodule K8s.Client.Codegen do
   @moduledoc false
   alias K8s.Client.Swagger
 
+  @operations Swagger.build(Swagger.spec())
+
   defmacro __using__(_opts) do
     quote do
       import K8s.Client.Codegen
@@ -11,21 +13,51 @@ defmodule K8s.Client.Codegen do
 
   @doc false
   defmacro __before_compile__(_env) do
-    operations =
-      Enum.reduce(Swagger.specs(), %{}, fn spec, acc ->
-        Map.merge(acc, Swagger.build(spec))
-      end)
+    op_map_funcs = build_op_kind_map(@operations)
 
     func_names =
-      operations
+      @operations
       |> Enum.map(fn {_name, metadata} -> gen_func_name(metadata) end)
       |> Enum.uniq()
 
     header_funcs = make_header_functions(func_names)
-    funcs = make_functions(operations)
+    funcs = make_functions(@operations)
     base_case_funcs = make_base_case_functions(func_names)
 
-    header_funcs ++ funcs ++ base_case_funcs
+    [op_map_funcs] ++ header_funcs ++ funcs ++ base_case_funcs
+  end
+
+  # Build a map of downcased k8s-style resource kind name (eg; deployment).
+  # This is to help w/ calls to client so they aren't resticted to constant-style names (eg HorizontalPodAutoscaler)
+  # K8s.Client.get("apps/v1", "Deployment")
+  # K8s.Client.get("apps/v1", "deployment")
+  # K8s.Client.get("apps/v1", :deployment)
+  defp build_op_kind_map(operations) do
+    op_kind_map =
+      operations
+      |> Map.values
+      |> Enum.reduce(%{}, fn(op, agg) ->
+        kind = op["kind"]
+        downkind = String.downcase(kind)
+
+        agg
+        |> Map.put(downkind, kind)
+        |> Map.put(kind, kind)
+      end)
+
+    quote do
+      def op_map() do
+        unquote(Macro.escape(op_kind_map))
+      end
+
+      def proper_kind_name(name) when is_atom(name) do
+        name |> Atom.to_string |> proper_kind_name
+      end
+
+      def proper_kind_name(name) when is_binary(name) do
+        Map.get(op_map(), name)
+      end
+    end
   end
 
   # Make "header" functions that destructure maps into argument lists.

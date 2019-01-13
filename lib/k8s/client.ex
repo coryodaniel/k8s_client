@@ -12,6 +12,7 @@ defmodule K8s.Client do
   @type operation_or_error :: Operation.t() | {:error, binary()}
   @type option :: {:name, String.t()} | {:namespace, binary() | :all}
   @type options :: [option]
+  @type http_method :: :get | :put | :patch | :post | :head | :options | :delete
 
   @doc "Alias of `create/1`"
   defdelegate post(resource), to: __MODULE__, as: :create
@@ -53,18 +54,7 @@ defmodule K8s.Client do
   @spec get(map()) :: operation_or_error
   def get(resource = %{}) do
     path = Routes.get(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :get,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :get, resource)
   end
 
   @doc """
@@ -82,17 +72,7 @@ defmodule K8s.Client do
   @spec get(binary, binary, options | nil) :: operation_or_error
   def get(api_version, kind, opts \\ []) do
     path = Routes.get(api_version, kind, opts)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :get
-        }
-    end
+    operation_or_error(path, :get)
   end
 
   @doc """
@@ -119,12 +99,12 @@ defmodule K8s.Client do
   @spec list(binary, binary, options | nil) :: operation_or_error
   def list(api_version, kind, namespace: :all) do
     path = Routes.list_all_namespaces(api_version, kind, [])
-    do_list(path)
+    operation_or_error(path, :get)
   end
 
   def list(api_version, kind, namespace: namespace) do
     path = Routes.list(api_version, kind, namespace: namespace)
-    do_list(path)
+    operation_or_error(path, :get)
   end
 
   @doc """
@@ -173,18 +153,7 @@ defmodule K8s.Client do
   @spec create(map()) :: operation_or_error
   def create(resource = %{}) do
     path = Routes.post(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :post,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :post, resource)
   end
 
   @doc """
@@ -233,18 +202,7 @@ defmodule K8s.Client do
   @spec patch(map()) :: operation_or_error
   def patch(resource = %{}) do
     path = Routes.patch(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :patch,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :patch, resource)
   end
 
   @doc """
@@ -293,18 +251,7 @@ defmodule K8s.Client do
   @spec update(map()) :: operation_or_error
   def update(resource = %{}) do
     path = Routes.patch(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :put,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :put, resource)
   end
 
   @doc """
@@ -359,18 +306,7 @@ defmodule K8s.Client do
   @spec delete(map()) :: operation_or_error
   def delete(resource = %{}) do
     path = Routes.delete(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :delete,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :delete, resource)
   end
 
   @doc """
@@ -388,17 +324,7 @@ defmodule K8s.Client do
   @spec delete(binary, binary, options | nil) :: operation_or_error
   def delete(api_version, kind, opts) do
     path = Routes.delete(api_version, kind, opts)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :delete
-        }
-    end
+    operation_or_error(path, :delete)
   end
 
   @doc """
@@ -423,17 +349,7 @@ defmodule K8s.Client do
   @spec delete_all(binary(), binary()) :: operation_or_error
   def delete_all(api_version, kind) do
     path = Routes.delete_collection(api_version, kind, [])
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :delete
-        }
-    end
+    operation_or_error(path, :delete)
   end
 
   @doc """
@@ -458,17 +374,7 @@ defmodule K8s.Client do
   @spec delete_all(binary(), binary(), namespace: binary()) :: operation_or_error
   def delete_all(api_version, kind, namespace: namespace) do
     path = Routes.delete_collection(api_version, kind, namespace: namespace)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :delete
-        }
-    end
+    operation_or_error(path, :delete)
   end
 
   @doc """
@@ -501,18 +407,7 @@ defmodule K8s.Client do
   @spec get_log(map()) :: operation_or_error
   def get_log(resource = %{}) do
     path = Routes.get_log(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :get,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :get, resource)
   end
 
   @doc """
@@ -528,17 +423,7 @@ defmodule K8s.Client do
   @spec get_log(binary, binary, options) :: operation_or_error
   def get_log(api_version, kind, opts) do
     path = Routes.get_log(api_version, kind, opts)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :get
-        }
-    end
+    operation_or_error(path, :get)
   end
 
   @doc """
@@ -572,18 +457,7 @@ defmodule K8s.Client do
   @spec get_status(map()) :: operation_or_error
   def get_status(resource = %{}) do
     path = Routes.get_status(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :get,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :get, resource)
   end
 
   @doc """
@@ -601,17 +475,7 @@ defmodule K8s.Client do
   @spec get_status(binary, binary, options | nil) :: operation_or_error
   def get_status(api_version, kind, opts \\ []) do
     path = Routes.get_status(api_version, kind, opts)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :get
-        }
-    end
+    operation_or_error(path, :get)
   end
 
   @doc """
@@ -645,18 +509,7 @@ defmodule K8s.Client do
   @spec patch_status(map()) :: operation_or_error
   def patch_status(resource = %{}) do
     path = Routes.patch_status(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :patch,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :patch, resource)
   end
 
   @doc """
@@ -674,17 +527,7 @@ defmodule K8s.Client do
   @spec patch_status(binary, binary, options | nil) :: operation_or_error
   def patch_status(api_version, kind, opts \\ []) do
     path = Routes.patch_status(api_version, kind, opts)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :patch
-        }
-    end
+    operation_or_error(path, :patch)
   end
 
   @doc """
@@ -718,18 +561,7 @@ defmodule K8s.Client do
   @spec put_status(map()) :: operation_or_error
   def put_status(resource = %{}) do
     path = Routes.put_status(resource)
-
-    case path do
-      {:error, msg} ->
-        {:error, msg}
-
-      path ->
-        %Operation{
-          path: path,
-          method: :put,
-          resource: resource
-        }
-    end
+    operation_or_error(path, :put, resource)
   end
 
   @doc """
@@ -747,17 +579,39 @@ defmodule K8s.Client do
   @spec put_status(binary, binary, options | nil) :: operation_or_error
   def put_status(api_version, kind, opts \\ []) do
     path = Routes.get_status(api_version, kind, opts)
+    operation_or_error(path, :put)
+  end
 
-    case path do
-      {:error, msg} ->
-        {:error, msg}
+  @doc """
+  Async run multiple operations. Operations will be returned in same order given.
+  Operations will not cease in event of failure.
 
-      path ->
-        %Operation{
-          path: path,
-          method: :put
-        }
-    end
+  ## Example
+
+  Get a list of pods, then map each one to an individual `GET` operation:
+
+    ```elixir
+    # Get a config reference
+    conf = K8s.Conf.from_file "~/.kube/config"
+
+    # Get the pods
+    operation = K8s.Client.list("v1", "Pod", namespace: :all)
+    {:ok, %{"items" => pods}} = K8s.Client.run(operation, conf)
+
+    # Map each one to an individual `GET` operation.
+    operations = Enum.map(pods, fn(%{"metadata" => %{"name" => name, "namespace" => ns}}) ->
+       K8s.Client.get("v1", "Pod", namespace: ns, name: name)
+    end)
+
+    # Get the results asynchronously
+    results = K8s.Client.async(operations, conf)
+    ```
+  """
+  @spec async(list(Operation.t()), Conf.t()) :: list({:ok, struct} | {:error, struct})
+  def async(operations, conf) do
+    operations
+    |> Enum.map(&(Task.async(fn -> run(&1, conf) end)))
+    |> Enum.map(&Task.await/1)
   end
 
   @spec run(Operation.t(), Conf.t()) :: {:ok, struct} | {:error, struct}
@@ -822,7 +676,8 @@ defmodule K8s.Client do
     ro.headers ++ [{"Accept", "application/json"}, {"Content-Type", "application/json"}]
   end
 
-  defp do_list(path) do
+  @spec operation_or_error(binary, http_method, map | nil) :: operation_or_error
+  defp operation_or_error(path, method, resource \\ nil) do
     case path do
       {:error, msg} ->
         {:error, msg}
@@ -830,7 +685,8 @@ defmodule K8s.Client do
       path ->
         %Operation{
           path: path,
-          method: :get
+          method: method,
+          resource: resource
         }
     end
   end
