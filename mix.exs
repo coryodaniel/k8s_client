@@ -48,6 +48,7 @@ defmodule K8s.MixProject do
       {:credo, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.4", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.19", only: :dev},
+      {:bypass, "~> 1.0", only: :test},
       {:excoveralls, "~> 0.10", only: :test}
     ]
   end

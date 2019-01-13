@@ -55,7 +55,7 @@ defmodule K8s.Client.Codegen do
       end
 
       def proper_kind_name(name) when is_binary(name) do
-        Map.get(op_map(), name)
+        Map.get(op_map(), name, name)
       end
     end
   end
@@ -128,6 +128,7 @@ defmodule K8s.Client.Codegen do
     for base_case_func <- func_names do
       quote do
         def unquote(:"#{base_case_func}")(api_version, kind, opts) do
+
           {:error,
            "No kubernetes operation for #{kind}(#{api_version}); Options: #{inspect(opts)}"}
         end

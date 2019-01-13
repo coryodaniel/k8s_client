@@ -98,15 +98,15 @@ defmodule K8s.Client.RoutesTest do
 
   describe "proper_kind_name/1" do
     test "accepts a constant-style string" do
-      assert "Deployment" == Routes.proper_kind_name("Deployment")
+      assert "Pod" == Routes.proper_kind_name("Pod")
     end
 
     test "accepts a constant-style atom" do
-      assert "Deployment" == Routes.proper_kind_name(:Deployment)
+      assert "Node" == Routes.proper_kind_name(:Node)
     end
 
     test "accepts a downcased string" do
-      assert "Deployment" == Routes.proper_kind_name("deployment")
+      assert "ServiceAccount" == Routes.proper_kind_name("serviceaccount")
     end
 
     test "accepts a downcased atom" do

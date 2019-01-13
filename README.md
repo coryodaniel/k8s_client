@@ -1,8 +1,6 @@
 # K8s.Client
 
-[K8s.Client](https://hexdocs.pm/k8s_client/readme.html) is an experimental Kubernetes client.
-
-*You probably dont want to use this*
+[K8s.Client](https://hexdocs.pm/k8s_client/readme.html) - Kubernetes client in elixir
 
 [![Build Status](https://travis-ci.org/coryodaniel/k8s_client.svg?branch=master)](https://travis-ci.org/coryodaniel/k8s_client)
 [![Coverage Status](https://coveralls.io/repos/github/coryodaniel/k8s_client/badge.svg?branch=master)](https://coveralls.io/github/coryodaniel/k8s_client?branch=master)
