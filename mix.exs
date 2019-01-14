@@ -1,11 +1,11 @@
-defmodule K8s.MixProject do
+defmodule K8s.Client.MixProject do
   use Mix.Project
 
   def project do
     [
       app: :k8s_client,
       description: "An experimental k8s client.",
-      version: "0.1.1",
+      version: "0.1.3",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

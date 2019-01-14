@@ -42,6 +42,75 @@ defmodule K8s.Client.Swagger do
 
   def build(_), do: %{}
 
+  @doc """
+  Map metadata to an `K8s.Client` action name
+  """
+  @spec gen_action_name(map()) :: binary()
+  def gen_action_name(metadata = %{"action" => name}), do: gen_action_name(metadata, name)
+
+  @spec gen_action_name(map(), binary()) :: binary()
+  def gen_action_name(%{"all_namespaces" => true}, name), do: "#{name}_all_namespaces"
+  def gen_action_name(_, "deletecollection"), do: "delete_collection"
+  def gen_action_name(_, name), do: name
+
+  @doc """
+  Find arguments in a URL path.
+  """
+  @spec find_args(binary()) :: list(atom())
+  def find_args(path_with_args) do
+    ~r/{([a-z]+)}/
+    |> Regex.scan(path_with_args)
+    |> Enum.map(fn match -> match |> List.last() |> String.to_atom() end)
+  end
+
+  @doc """
+  Build a map of downcased k8s-style resource kind name (eg; deployment).
+
+  ## Examples
+
+  Allow client calls to provide name variants so they aren't resticted to constant-style names (eg HorizontalPodAutoscaler).
+
+  ```elixir
+    K8s.Client.get("apps/v1", "Deployment")
+    "Deployment"
+
+    K8s.Client.get("apps/v1", "deployment")
+    "Deployment"
+
+    K8s.Client.get("apps/v1", :deployment)
+    "Deployment"
+  ```
+  """
+  def operation_kind_map(operations) do
+    operations
+    |> Map.values
+    |> Enum.reduce(%{}, fn(op, agg) ->
+      kind = op["kind"]
+      downkind = String.downcase(kind)
+
+      agg
+      |> Map.put(downkind, kind)
+      |> Map.put(kind, kind)
+    end)
+  end
+
+
+  @doc """
+  Replaces path variables with options.
+
+  ## Examples
+
+      iex> K8s.Client.Codegen.replace_path_vars("/foo/{name}", name: "bar")
+      "/foo/bar"
+
+  """
+  @spec replace_path_vars(binary(), keyword(atom())) :: binary()
+  def replace_path_vars(path_template, opts) do
+    Regex.replace(~r/\{(\w+?)\}/, path_template, fn _, var ->
+      opts[String.to_existing_atom(var)]
+    end)
+  end
+
   defp api_version("", version), do: version
   defp api_version(group, version), do: "#{group}/#{version}"
 
