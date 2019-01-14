@@ -4,7 +4,6 @@ defmodule K8s.Client.RoutesTest do
   alias K8s.Client.Routes
   alias K8s.Client.Swagger
 
-
   @default_k8s_spec System.get_env("K8S_SPEC") || "priv/swagger/1.13.json"
   @swagger Jason.decode!(File.read!(@default_k8s_spec))
 

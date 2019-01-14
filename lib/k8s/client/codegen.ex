@@ -88,7 +88,6 @@ defmodule K8s.Client.Codegen do
     for base_case_func <- func_names do
       quote do
         def unquote(:"#{base_case_func}")(api_version, kind, opts) do
-
           {:error,
            "No kubernetes operation for #{kind}(#{api_version}); Options: #{inspect(opts)}"}
         end
