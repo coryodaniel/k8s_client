@@ -16,12 +16,17 @@ defmodule K8s.Client.RoutesTest do
     |> String.replace("{logpath}", "qux")
   end
 
-  def path_opts(op) do
-    # Send all the opts, routes will only use the opts it needs
-    case Regex.match?(~r/AllNamespaces/, op["operationId"]) do
-      true -> [namespace: :all, name: "bar", path: "pax", logpath: "qux"]
-      false -> [namespace: "foo", name: "bar", path: "pax", logpath: "qux"]
-    end
+  def path_opts(params) when not is_list(params), do: []
+  def path_opts(params) when is_list(params) do
+    values = [namespace: "foo", name: "bar", path: "pax", logpath: "qux"]
+    Enum.reduce(params, [], fn(param, agg) ->
+      case param["in"] do
+        "path" ->
+          name = String.to_existing_atom(param["name"])
+          agg ++ [ {name, values[name]} ]
+        _ -> agg
+      end
+    end)
   end
 
   def api_version(nil, version), do: version
@@ -29,12 +34,9 @@ defmodule K8s.Client.RoutesTest do
   def api_version(group, version), do: "#{group}/#{version}"
 
   def fn_to_test_for__list(op) do
-    opts = path_opts(op)
-
-    if opts[:namespace] == :all do
-      :list_all_namespaces
-    else
-      :list
+    case Regex.match?(~r/AllNamespaces/, op["operationId"]) do
+      true -> :list_all_namespaces
+      false -> :list
     end
   end
 
@@ -78,48 +80,12 @@ defmodule K8s.Client.RoutesTest do
     :put_status
   end
 
-  def operation_to_map(op) do
-    %{"version" => version, "group" => group, "kind" => kind} =
-      op["x-kubernetes-group-version-kind"]
-
-    path_opts = path_opts(op)
-
-    metadata =
-      case path_opts[:namespace] do
-        :all -> %{"name" => path_opts[:name]}
-        other -> %{"namespace" => other, "name" => path_opts[:name]}
-      end
-
-    %{
-      "apiVersion" => api_version(group, version),
-      "kind" => kind,
-      "metadata" => metadata
-    }
-  end
-
-  describe "proper_kind_name/1" do
-    test "accepts a constant-style string" do
-      assert "Pod" == Routes.proper_kind_name("Pod")
-    end
-
-    test "accepts a constant-style atom" do
-      assert "Node" == Routes.proper_kind_name(:Node)
-    end
-
-    test "accepts a downcased string" do
-      assert "ServiceAccount" == Routes.proper_kind_name("serviceaccount")
-    end
-
-    test "accepts a downcased atom" do
-      assert "Deployment" == Routes.proper_kind_name(:deployment)
-    end
-  end
-
   # Skips /watch/ Deprecated URLs
-  @swagger["paths"]
-  |> Enum.filter(fn {path, _operations} -> !Regex.match?(~r/\/watch\//, path) end)
-  |> Enum.each(fn {path, operations} ->
+  @paths Enum.filter(@swagger["paths"], fn {path, _operations} -> !Regex.match?(~r/\/watch\//, path) end)
+
+  Enum.each(@paths, fn {path, operations} ->
     @path path
+    @params operations["parameters"] || []
 
     operations
     |> Map.delete("parameters")
@@ -134,21 +100,6 @@ defmodule K8s.Client.RoutesTest do
            Map.has_key?(@operation, "x-kubernetes-group-version-kind") &&
            @operation["x-kubernetes-action"] != "connect" do
         describe "#{@default_k8s_spec}: #{@operation_id} [#{@http_method}] #{@path}" do
-          test "given a map, renders the path" do
-            expected = expected_path(@path)
-
-            test_function =
-              case Swagger.subaction(@path) do
-                nil -> "fn_to_test_for__#{@route_function}"
-                subaction -> "fn_to_test_for__#{@route_function}_#{subaction}"
-              end
-
-            function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
-
-            map = operation_to_map(@operation)
-            assert expected == apply(Routes, function_under_test, [map])
-          end
-
           test "given path components, renders the path" do
             expected = expected_path(@path)
 
@@ -158,15 +109,14 @@ defmodule K8s.Client.RoutesTest do
                 subaction -> "fn_to_test_for__#{@route_function}_#{subaction}"
               end
 
-            function_under_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
+            path_action_to_test = apply(__MODULE__, String.to_atom(test_function), [@operation])
 
             %{"version" => version, "group" => group, "kind" => kind} =
               @operation["x-kubernetes-group-version-kind"]
 
             api_version = api_version(group, version)
-            path_opts = path_opts(@operation)
-
-            assert expected == apply(Routes, function_under_test, [api_version, kind, path_opts])
+            opts = path_opts(@params)
+            assert expected == Routes.path_for(path_action_to_test, api_version, kind, opts)
           end
         end
       end
@@ -174,12 +124,13 @@ defmodule K8s.Client.RoutesTest do
   end)
 
   test "returns error when missing required path arguments" do
-    result = Routes.post("apps/v1", "Deployment", [])
-    assert {:error, "Missing required parameter: namespace"} = result
+    result = Routes.path_for(:post, "apps/v1", "Deployment", [])
+    assert {:error, "Unsupported operation: post/apps/v1/Deployment"} = result
   end
 
   test "returns error when operation not supported" do
-    result = Routes.post("apps/v9000", "Deployment", [])
-    assert {:error, "No kubernetes operation for Deployment(apps/v9000); Options: []"} = result
+    result = Routes.path_for(:post, "apps/v9000", "Deployment", namespace: "default")
+    assert {:error,
+    "Unsupported operation: post/apps/v9000/Deployment/namespace"} = result
   end
 end

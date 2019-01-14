@@ -3,7 +3,6 @@ defmodule K8s.Client.Routes do
   Kubernetes operation URL paths
   """
 
-  use K8s.Client.Codegen
   alias K8s.Client.Swagger
 
   @operations Swagger.build(Swagger.spec())
