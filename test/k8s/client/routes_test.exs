@@ -4,8 +4,8 @@ defmodule K8s.Client.RoutesTest do
   alias K8s.Client.Routes
   alias K8s.Client.Swagger
 
-  @default_k8s_spec System.get_env("K8S_SPEC") || "priv/swagger/1.13.json"
-  @swagger Jason.decode!(File.read!(@default_k8s_spec))
+  @k8s_spec System.get_env("K8S_SPEC") || "priv/swagger/1.13.json"
+  @swagger Jason.decode!(File.read!(@k8s_spec))
 
   # Interpolates path variables {path, namespace, name, logpath}
   def expected_path(path_template) do
@@ -80,8 +80,10 @@ defmodule K8s.Client.RoutesTest do
     :put_status
   end
 
-  # Skips /watch/ Deprecated URLs
-  @paths Enum.filter(@swagger["paths"], fn {path, _operations} -> !Regex.match?(~r/\/watch\//, path) end)
+  # Skips /watch/ Deprecated URLs and finalize|bindings|approval|scale paths
+  @paths Enum.filter(@swagger["paths"], fn {path, _operations} ->
+    !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, path) && !Regex.match?(~r/\/watch\//, path)
+  end)
 
   Enum.each(@paths, fn {path, operations} ->
     @path path
@@ -95,11 +97,9 @@ defmodule K8s.Client.RoutesTest do
       @operation_id @operation["operationId"]
       @route_function @operation["x-kubernetes-action"]
 
-      # Skips finalize|bindings|approval|scale paths, connect, and operations w/o k8s group-version-kind
-      if !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, @path) &&
-           Map.has_key?(@operation, "x-kubernetes-group-version-kind") &&
-           @operation["x-kubernetes-action"] != "connect" do
-        describe "#{@default_k8s_spec}: #{@operation_id} [#{@http_method}] #{@path}" do
+      # Skips connect, and operations w/o k8s group-version-kind
+      if Map.has_key?(@operation, "x-kubernetes-group-version-kind") && @operation["x-kubernetes-action"] != "connect" do
+        describe "#{@k8s_spec}: #{@operation_id} [#{@http_method}] #{@path}" do
           test "given path components, renders the path" do
             expected = expected_path(@path)
 
