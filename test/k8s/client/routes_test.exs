@@ -17,14 +17,18 @@ defmodule K8s.Client.RoutesTest do
   end
 
   def path_opts(params) when not is_list(params), do: []
+
   def path_opts(params) when is_list(params) do
     values = [namespace: "foo", name: "bar", path: "pax", logpath: "qux"]
-    Enum.reduce(params, [], fn(param, agg) ->
+
+    Enum.reduce(params, [], fn param, agg ->
       case param["in"] do
         "path" ->
           name = String.to_existing_atom(param["name"])
-          agg ++ [ {name, values[name]} ]
-        _ -> agg
+          agg ++ [{name, values[name]}]
+
+        _ ->
+          agg
       end
     end)
   end
@@ -82,8 +86,9 @@ defmodule K8s.Client.RoutesTest do
 
   # Skips /watch/ Deprecated URLs and finalize|bindings|approval|scale paths
   @paths Enum.filter(@swagger["paths"], fn {path, _operations} ->
-    !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, path) && !Regex.match?(~r/\/watch\//, path)
-  end)
+           !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, path) &&
+             !Regex.match?(~r/\/watch\//, path)
+         end)
 
   Enum.each(@paths, fn {path, operations} ->
     @path path
@@ -98,7 +103,8 @@ defmodule K8s.Client.RoutesTest do
       @route_function @operation["x-kubernetes-action"]
 
       # Skips connect, and operations w/o k8s group-version-kind
-      if Map.has_key?(@operation, "x-kubernetes-group-version-kind") && @operation["x-kubernetes-action"] != "connect" do
+      if Map.has_key?(@operation, "x-kubernetes-group-version-kind") &&
+           @operation["x-kubernetes-action"] != "connect" do
         describe "#{@k8s_spec}: #{@operation_id} [#{@http_method}] #{@path}" do
           test "given path components, renders the path" do
             expected = expected_path(@path)
@@ -130,7 +136,6 @@ defmodule K8s.Client.RoutesTest do
 
   test "returns error when operation not supported" do
     result = Routes.path_for(:post, "apps/v9000", "Deployment", namespace: "default")
-    assert {:error,
-    "Unsupported operation: post/apps/v9000/Deployment/namespace"} = result
+    assert {:error, "Unsupported operation: post/apps/v9000/Deployment/namespace"} = result
   end
 end

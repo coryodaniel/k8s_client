@@ -25,9 +25,9 @@ defmodule K8s.Client.Routes do
   """
   def similar(name) do
     name_length = String.length(name)
-    route_map()
 
-    |> Map.keys
+    route_map()
+    |> Map.keys()
     |> Enum.filter(fn key ->
       case String.length(key) <= name_length do
         true -> String.starts_with?(name, key)
@@ -100,7 +100,9 @@ defmodule K8s.Client.Routes do
     case Map.get(route_map(), key) do
       nil ->
         {:error, "Unsupported operation: #{key}"}
-      template -> Swagger.replace_path_vars(template, opts)
+
+      template ->
+        Swagger.replace_path_vars(template, opts)
     end
   end
 end

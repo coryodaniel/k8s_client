@@ -201,7 +201,10 @@ defmodule K8s.Client do
       }
   """
   @spec create(map()) :: operation_or_error
-  def create(%{"apiVersion" => api_version, "kind" => kind, "metadata" => %{"namespace" => ns}} = resource) do
+  def create(
+        %{"apiVersion" => api_version, "kind" => kind, "metadata" => %{"namespace" => ns}} =
+          resource
+      ) do
     path = Routes.path_for(:post, api_version, kind, namespace: ns)
     operation_or_error(path, :post, resource)
   end
