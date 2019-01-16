@@ -3,7 +3,7 @@ defmodule K8s.Client.Routes do
   Kubernetes operation URL paths
   """
 
-  alias K8s.Client.{Routes, Swagger}
+  alias K8s.Client.{Swagger}
 
   @operations Swagger.build(Swagger.spec())
   @operation_kind_map Swagger.operation_kind_map(@operations)
