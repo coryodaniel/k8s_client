@@ -63,7 +63,7 @@ defmodule K8s.Client do
   """
   @spec get(map()) :: operation_or_error
   def get(resource = %{}) do
-    path = Routes.get(resource)
+    path = Routes.path_for(:get, resource)
     operation_or_error(path, :get, resource)
   end
 
@@ -85,8 +85,7 @@ defmodule K8s.Client do
   """
   @spec get(binary, binary, options | nil) :: operation_or_error
   def get(api_version, kind, opts \\ []) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.get(api_version, kind, opts)
+    path = Routes.path_for(:get, api_version, kind, opts)
     operation_or_error(path, :get)
   end
 
@@ -117,14 +116,12 @@ defmodule K8s.Client do
   """
   @spec list(binary, binary, options | nil) :: operation_or_error
   def list(api_version, kind, namespace: :all) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.list_all_namespaces(api_version, kind, [])
+    path = Routes.path_for(:list_all_namespaces, api_version, kind)
     operation_or_error(path, :get)
   end
 
   def list(api_version, kind, namespace: namespace) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.list(api_version, kind, namespace: namespace)
+    path = Routes.path_for(:list, api_version, kind, namespace: namespace)
     operation_or_error(path, :get)
   end
 
@@ -204,8 +201,13 @@ defmodule K8s.Client do
       }
   """
   @spec create(map()) :: operation_or_error
-  def create(resource = %{}) do
-    path = Routes.post(resource)
+  def create(%{"apiVersion" => api_version, "kind" => kind, "metadata" => %{"namespace" => ns}} = resource) do
+    path = Routes.path_for(:post, api_version, kind, namespace: ns)
+    operation_or_error(path, :post, resource)
+  end
+
+  def create(%{"apiVersion" => api_version, "kind" => kind} = resource) do
+    path = Routes.path_for(:post, api_version, kind)
     operation_or_error(path, :post, resource)
   end
 
@@ -291,7 +293,7 @@ defmodule K8s.Client do
   """
   @spec patch(map()) :: operation_or_error
   def patch(resource = %{}) do
-    path = Routes.patch(resource)
+    path = Routes.path_for(:patch, resource)
     operation_or_error(path, :patch, resource)
   end
 
@@ -377,7 +379,7 @@ defmodule K8s.Client do
   """
   @spec replace(map()) :: operation_or_error
   def replace(resource = %{}) do
-    path = Routes.patch(resource)
+    path = Routes.path_for(:put, resource)
     operation_or_error(path, :put, resource)
   end
 
@@ -436,7 +438,7 @@ defmodule K8s.Client do
   """
   @spec delete(map()) :: operation_or_error
   def delete(resource = %{}) do
-    path = Routes.delete(resource)
+    path = Routes.path_for(:delete, resource)
     operation_or_error(path, :delete, resource)
   end
 
@@ -444,6 +446,7 @@ defmodule K8s.Client do
   Returns a `DELETE` operation for a resource by version, kind, name, and optionally namespace.
 
   ## Examples
+
       iex> K8s.Client.delete("apps/v1", "Deployment", namespace: "test", name: "nginx")
       %K8s.Client.Operation{
         method: :delete,
@@ -453,8 +456,7 @@ defmodule K8s.Client do
   """
   @spec delete(binary, binary, options | nil) :: operation_or_error
   def delete(api_version, kind, opts) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.delete(api_version, kind, opts)
+    path = Routes.path_for(:delete, api_version, kind, opts)
     operation_or_error(path, :delete)
   end
 
@@ -477,8 +479,7 @@ defmodule K8s.Client do
   """
   @spec delete_all(binary(), binary()) :: operation_or_error
   def delete_all(api_version, kind) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.delete_collection(api_version, kind, [])
+    path = Routes.path_for(:delete_collection, api_version, kind)
     operation_or_error(path, :delete)
   end
 
@@ -501,8 +502,7 @@ defmodule K8s.Client do
   """
   @spec delete_all(binary(), binary(), namespace: binary()) :: operation_or_error
   def delete_all(api_version, kind, namespace: namespace) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.delete_collection(api_version, kind, namespace: namespace)
+    path = Routes.path_for(:delete_collection, api_version, kind, namespace: namespace)
     operation_or_error(path, :delete)
   end
 
@@ -515,6 +515,7 @@ defmodule K8s.Client do
     * metadata.namespace
 
   ## Examples
+
       iex> pod = %{
       ...>   "apiVersion" => "v1",
       ...>   "kind" => "Pod",
@@ -529,7 +530,7 @@ defmodule K8s.Client do
   """
   @spec get_log(map()) :: operation_or_error
   def get_log(resource = %{}) do
-    path = Routes.get_log(resource)
+    path = Routes.path_for(:get_log, resource)
     operation_or_error(path, :get, resource)
   end
 
@@ -537,6 +538,7 @@ defmodule K8s.Client do
   Returns a `GET` operation for a pod's logs given a namespace and a pod name.
 
   ## Examples
+
       iex> K8s.Client.get_log("v1", "Pod", namespace: "test", name: "nginx-pod")
       %K8s.Client.Operation{
         method: :get,
@@ -545,8 +547,7 @@ defmodule K8s.Client do
   """
   @spec get_log(binary, binary, options) :: operation_or_error
   def get_log(api_version, kind, opts) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.get_log(api_version, kind, opts)
+    path = Routes.path_for(:get_log, api_version, kind, opts)
     operation_or_error(path, :get)
   end
 
@@ -574,7 +575,7 @@ defmodule K8s.Client do
   """
   @spec get_status(map()) :: operation_or_error
   def get_status(resource = %{}) do
-    path = Routes.get_status(resource)
+    path = Routes.path_for(:get_status, resource)
     operation_or_error(path, :get, resource)
   end
 
@@ -582,6 +583,7 @@ defmodule K8s.Client do
   Returns a `GET` operation for a resource's status by version, kind, name, and optionally namespace.
 
   ## Examples
+
       iex> K8s.Client.get_status("apps/v1", "Deployment", namespace: "test", name: "nginx")
       %K8s.Client.Operation{
         method: :get,
@@ -591,8 +593,7 @@ defmodule K8s.Client do
   """
   @spec get_status(binary, binary, options | nil) :: operation_or_error
   def get_status(api_version, kind, opts \\ []) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.get_status(api_version, kind, opts)
+    path = Routes.path_for(:get_status, api_version, kind, opts)
     operation_or_error(path, :get)
   end
 
@@ -626,7 +627,7 @@ defmodule K8s.Client do
   """
   @spec patch_status(map()) :: operation_or_error
   def patch_status(resource = %{}) do
-    path = Routes.patch_status(resource)
+    path = Routes.path_for(:patch_status, resource)
     operation_or_error(path, :patch, resource)
   end
 
@@ -643,8 +644,7 @@ defmodule K8s.Client do
   """
   @spec patch_status(binary, binary, options | nil) :: operation_or_error
   def patch_status(api_version, kind, opts \\ []) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.patch_status(api_version, kind, opts)
+    path = Routes.path_for(:patch_status, api_version, kind, opts)
     operation_or_error(path, :patch)
   end
 
@@ -678,7 +678,7 @@ defmodule K8s.Client do
   """
   @spec put_status(map()) :: operation_or_error
   def put_status(resource = %{}) do
-    path = Routes.put_status(resource)
+    path = Routes.path_for(:put_status, resource)
     operation_or_error(path, :put, resource)
   end
 
@@ -695,8 +695,7 @@ defmodule K8s.Client do
   """
   @spec put_status(binary, binary, options | nil) :: operation_or_error
   def put_status(api_version, kind, opts \\ []) do
-    kind = Routes.proper_kind_name(kind)
-    path = Routes.get_status(api_version, kind, opts)
+    path = Routes.path_for(:put_status, api_version, kind, opts)
     operation_or_error(path, :put)
   end
 
@@ -728,10 +727,9 @@ defmodule K8s.Client do
   @spec async(list(Operation.t()), Conf.t()) :: list({:ok, struct} | {:error, struct})
   def async(operations, conf) do
     operations
-    |> Enum.map(&(Task.async(fn -> run(&1, conf) end)))
+    |> Enum.map(&Task.async(fn -> run(&1, conf) end))
     |> Enum.map(&Task.await/1)
   end
-
 
   @doc """
   Runs a `K8s.Client.Operation`.
@@ -825,12 +823,15 @@ defmodule K8s.Client do
     case http_body(body, request.method) do
       {:ok, http_body} ->
         HTTPoison.request(request.method, url, http_body, http_headers, http_opts)
-      error -> error
+
+      error ->
+        error
     end
   end
 
   @spec http_body(any(), atom()) :: {:ok, binary} | {:error, binary}
   defp http_body(body, _) when not is_map(body), do: {:ok, ""}
+
   defp http_body(body = %{}, http_method) when http_method in @allow_http_body do
     Jason.encode(body)
   end
@@ -861,10 +862,11 @@ defmodule K8s.Client do
 
   @spec operation_or_error(binary, http_method, map | nil) :: operation_or_error
   defp operation_or_error(path, method, resource \\ nil) do
-    operation_resource = case method do
-      method when method in @allow_http_body -> resource
-      _ -> nil
-    end
+    operation_resource =
+      case method do
+        method when method in @allow_http_body -> resource
+        _ -> nil
+      end
 
     case path do
       {:error, msg} ->
