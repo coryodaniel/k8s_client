@@ -1,9 +1,7 @@
 defmodule K8s.Client.Swagger do
   @moduledoc """
-  Generates route information from a swagger spec.
+  Functions for converting swagger specs
   """
-
-  alias K8s.Client.Swagger
 
   @doc """
   Returns kubernetes swagger spec
@@ -96,22 +94,6 @@ defmodule K8s.Client.Swagger do
     end)
   end
 
-  @doc """
-  Replaces path variables with options.
-
-  ## Examples
-
-      iex> K8s.Client.Codegen.replace_path_vars("/foo/{name}", name: "bar")
-      "/foo/bar"
-
-  """
-  @spec replace_path_vars(binary(), keyword(atom())) :: binary()
-  def replace_path_vars(path_template, opts) do
-    Regex.replace(~r/\{(\w+?)\}/, path_template, fn _, var ->
-      opts[String.to_existing_atom(var)]
-    end)
-  end
-
   defp api_version("", version), do: version
   defp api_version(group, version), do: "#{group}/#{version}"
 
@@ -171,35 +153,5 @@ defmodule K8s.Client.Swagger do
     |> Regex.scan(path)
     |> Enum.map(fn matches -> List.last(matches) end)
     |> List.first()
-  end
-
-  @doc """
-  Generates a map of operation attributes to path template.
-  """
-  def route_map(operations) do
-    operations
-    |> Map.values()
-    |> Enum.reduce(%{}, fn metadata, agg ->
-      path_with_args = metadata["path"]
-
-      action_name = Swagger.gen_action_name(metadata)
-      api_version = metadata["api_version"]
-      kind = metadata["kind"]
-      arg_names = Swagger.find_args(path_with_args)
-
-      key = make_route_key(action_name, api_version, kind, arg_names)
-      Map.put(agg, key, path_with_args)
-    end)
-  end
-
-  @doc """
-  Makes a route key.
-
-  Sorts the args because the interpolation doesn't care, and it makes finding the key much easier.
-  """
-  @spec make_route_key(binary, binary, binary, list(atom)) :: binary
-  def make_route_key(action_name, api_version, kind, arg_names) do
-    key_list = [action_name, api_version, kind] ++ Enum.sort(arg_names)
-    Enum.join(key_list, "/")
   end
 end

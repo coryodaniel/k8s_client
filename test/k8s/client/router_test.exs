@@ -1,8 +1,8 @@
-defmodule K8s.Client.RoutesTest do
+defmodule K8s.Client.RouterAuotTest do
   use ExUnit.Case, async: true
-  doctest K8s.Client.Routes
-  alias K8s.Client.Routes
-  alias K8s.Client.Swagger
+  doctest K8s.Client.Router.Impl
+
+  alias K8s.Client.{Router,Swagger}
 
   @k8s_spec System.get_env("K8S_SPEC") || "priv/swagger/1.13.json"
   @swagger Jason.decode!(File.read!(@k8s_spec))
@@ -122,7 +122,7 @@ defmodule K8s.Client.RoutesTest do
 
             api_version = api_version(group, version)
             opts = path_opts(@params)
-            assert expected == Routes.path_for(path_action_to_test, api_version, kind, opts)
+            assert expected == Router.path_for(path_action_to_test, api_version, kind, opts)
           end
         end
       end
@@ -130,12 +130,12 @@ defmodule K8s.Client.RoutesTest do
   end)
 
   test "returns error when missing required path arguments" do
-    result = Routes.path_for(:post, "apps/v1", "Deployment", [])
+    result = Router.path_for(:post, "apps/v1", "Deployment", [])
     assert {:error, "Unsupported operation: post/apps/v1/Deployment"} = result
   end
 
   test "returns error when operation not supported" do
-    result = Routes.path_for(:post, "apps/v9000", "Deployment", namespace: "default")
+    result = Router.path_for(:post, "apps/v9000", "Deployment", namespace: "default")
     assert {:error, "Unsupported operation: post/apps/v9000/Deployment/namespace"} = result
   end
 end
