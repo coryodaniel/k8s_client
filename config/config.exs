@@ -3,4 +3,5 @@
 use Mix.Config
 
 config :k8s_client,
-  spec: "priv/swagger/1.13.json"
+  spec: "priv/swagger/1.13.json",
+  fallback_router: {IO, :puts}

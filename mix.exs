@@ -32,7 +32,8 @@ defmodule K8s.Client.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {K8s.Client.Application, []}
     ]
   end
 

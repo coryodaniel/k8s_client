@@ -3,11 +3,8 @@ defmodule K8s.Client.Routes do
   Kubernetes operation URL paths
   """
 
-  alias K8s.Client.{Swagger}
-
-  @operations Swagger.build(Swagger.spec())
-  @operation_kind_map Swagger.operation_kind_map(@operations)
-  @route_map Swagger.route_map(@operations)
+  alias K8s.Client.{Operation, Swagger}
+  @route_map Swagger.route_map(Operation.list())
 
   def route_map(), do: @route_map
 
@@ -35,28 +32,6 @@ defmodule K8s.Client.Routes do
       end
     end)
   end
-
-  def operation_kind_map(), do: @operation_kind_map
-
-  @doc """
-  Gets the proper kubernets Kind name given an atom, or downcased string.
-
-  ## Examples
-
-      iex> K8s.Client.Routes.proper_kind_name(:deployment)
-      "Deployment"
-
-      iex> K8s.Client.Routes.proper_kind_name(:Deployment)
-      "Deployment"
-
-      iex> K8s.Client.Routes.proper_kind_name("deployment")
-      "Deployment"
-
-      iex> K8s.Client.Routes.proper_kind_name(:horizontalpodautoscaler)
-      "HorizontalPodAutoscaler"
-  """
-  def proper_kind_name(name) when is_atom(name), do: name |> Atom.to_string() |> proper_kind_name
-  def proper_kind_name(name) when is_binary(name), do: Map.get(operation_kind_map(), name, name)
 
   @doc """
   Generates the path for an action.
@@ -95,7 +70,7 @@ defmodule K8s.Client.Routes do
 
   @spec path_for(binary, binary, binary, keyword(atom)) :: binary | {:error, binary}
   def path_for(action, api_version, kind, opts \\ []) do
-    key = Swagger.make_route_key(action, api_version, proper_kind_name(kind), Keyword.keys(opts))
+    key = Swagger.make_route_key(action, api_version, Operation.proper_kind_name(kind), Keyword.keys(opts))
 
     case Map.get(route_map(), key) do
       nil ->
