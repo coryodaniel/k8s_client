@@ -3,13 +3,38 @@ defmodule K8s.Client.Routes do
   Kubernetes operation URL paths
   """
 
-  alias K8s.Client.Swagger
+  alias K8s.Client.{Routes, Swagger}
 
   @operations Swagger.build(Swagger.spec())
   @operation_kind_map Swagger.operation_kind_map(@operations)
   @route_map Swagger.route_map(@operations)
 
   def route_map(), do: @route_map
+
+  @doc """
+  Find similar routes.
+
+  ## Examples
+
+      iex> K8s.Client.Routes.similar("post/apps/v1beta1/Deployment/namespace/name")
+      ["post/apps/v1beta1/Deployment/namespace"]
+
+      iex> K8s.Client.Routes.similar("post/apps/v1beta1/Deployment")
+      ["post/apps/v1beta1/DeploymentRollback/name/namespace", "post/apps/v1beta1/Deployment/namespace"]
+
+  """
+  def similar(name) do
+    name_length = String.length(name)
+    route_map()
+
+    |> Map.keys
+    |> Enum.filter(fn key ->
+      case String.length(key) <= name_length do
+        true -> String.starts_with?(name, key)
+        false -> String.starts_with?(key, name)
+      end
+    end)
+  end
 
   def operation_kind_map(), do: @operation_kind_map
 
@@ -73,7 +98,8 @@ defmodule K8s.Client.Routes do
     key = Swagger.make_route_key(action, api_version, proper_kind_name(kind), Keyword.keys(opts))
 
     case Map.get(route_map(), key) do
-      nil -> {:error, "Unsupported operation: #{key}"}
+      nil ->
+        {:error, "Unsupported operation: #{key}"}
       template -> Swagger.replace_path_vars(template, opts)
     end
   end
