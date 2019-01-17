@@ -49,7 +49,8 @@ defmodule K8s.Client.MixProject do
       {:dialyxir, "~> 1.0.0-rc.4", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.19", only: :dev},
       {:bypass, "~> 1.0", only: :test},
-      {:excoveralls, "~> 0.10", only: :test}
+      {:excoveralls, "~> 0.10", only: :test},
+      {:stream_data, "~> 0.4", only: :test}
     ]
   end
 
