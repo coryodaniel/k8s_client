@@ -1,4 +1,4 @@
-defmodule K8s.Client.RouterAuotTest do
+defmodule K8s.Client.RouterTest do
   use ExUnit.Case, async: true
   doctest K8s.Client.Router.Impl
 
