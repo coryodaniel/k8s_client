@@ -142,7 +142,7 @@ defmodule K8s.Client.Router do
   defp create_table(name) do
     table_name = to_table_name(name)
 
-    case :ets.whereis(table_name) do
+    case :ets.info(table_name) do
       :undefined -> :ets.new(table_name, [:set, :protected, :named_table])
       _ -> {:error, :router_exists}
     end
