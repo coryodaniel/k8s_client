@@ -18,7 +18,7 @@ defmodule K8s.Client do
   """
 
   alias K8s.Conf
-  alias K8s.Client.{Operation, Router}
+  alias K8s.Client.{Operation, Route, Router}
   @allow_http_body [:put, :patch, :post]
   @type operation_or_error :: Operation.t() | {:error, binary()}
   @type option :: {:name, String.t()} | {:namespace, binary() | :all}
@@ -77,6 +77,12 @@ defmodule K8s.Client do
   ## Examples
 
       iex> K8s.Client.get("apps/v1", "Deployment", namespace: "test", name: "nginx")
+      %K8s.Client.Operation{
+        method: :get,
+        path: "/apis/apps/v1/namespaces/test/deployments/nginx"
+      }
+
+      iex> K8s.Client.get("apps/v1", :deployment, namespace: "test", name: "nginx")
       %K8s.Client.Operation{
         method: :get,
         path: "/apis/apps/v1/namespaces/test/deployments/nginx"
@@ -202,14 +208,17 @@ defmodule K8s.Client do
   """
   @spec create(map()) :: operation_or_error
   def create(
-        %{"apiVersion" => api_version, "kind" => kind, "metadata" => %{"namespace" => ns}} =
-          resource
+        resource = %{
+          "apiVersion" => api_version,
+          "kind" => kind,
+          "metadata" => %{"namespace" => ns}
+        }
       ) do
     path = Router.path_for(:post, api_version, kind, namespace: ns)
     operation_or_error(path, :post, resource)
   end
 
-  def create(%{"apiVersion" => api_version, "kind" => kind} = resource) do
+  def create(resource = %{"apiVersion" => api_version, "kind" => kind}) do
     path = Router.path_for(:post, api_version, kind)
     operation_or_error(path, :post, resource)
   end

@@ -25,6 +25,13 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/k8s](https://hexdocs.pm/k8s).
 
+Before starting the client you must start a Router:
+
+```elixir
+K8s.Client.Router.start("path/to/your/k8s/swagger.json")
+K8s.Client.get("v1", :pod, name: "nginx", namespace: "default")
+```
+
 ## Notes
 
 K8s.Client never assumes the "default" namespace. A namespace is always required when applicable to an operation.

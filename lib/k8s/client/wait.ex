@@ -33,7 +33,7 @@ defmodule K8s.Client.Wait do
   """
   @spec until(Operation.t(), map(), keyword(atom())) ::
           {:ok, map()} | {:error, binary()}
-  def until(%Operation{method: :get} = op, conf, opts) do
+  def until(op = %Operation{method: :get}, conf, opts) do
     conditions =
       Wait
       |> struct(opts)
@@ -67,7 +67,7 @@ defmodule K8s.Client.Wait do
     {:ok, processed}
   end
 
-  defp run_operation(op, conf, %Wait{timeout_after: timeout_after} = opts) do
+  defp run_operation(op, conf, opts = %Wait{timeout_after: timeout_after}) do
     case timed_out?(timeout_after) do
       true -> {:error, :timeout}
       false -> evaluate_operation(op, conf, opts)
@@ -77,7 +77,7 @@ defmodule K8s.Client.Wait do
   defp evaluate_operation(
          op,
          conf,
-         %Wait{processor: processor, sleep: sleep, eval: eval, find: find} = opts
+         opts = %Wait{processor: processor, sleep: sleep, eval: eval, find: find}
        ) do
     with {:ok, resp} <- processor.(op, conf),
          true <- satisfied?(resp, find, eval) do

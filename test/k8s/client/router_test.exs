@@ -2,31 +2,34 @@ defmodule K8s.Client.RouterTest do
   use ExUnit.Case
   use ExUnitProperties
   alias K8s.Client.{Router, Swagger}
+  doctest K8s.Client.Router
 
   @k8s_spec System.get_env("K8S_SPEC") || "priv/swagger/1.13.json"
-  @swagger @k8s_spec |> File.read! |> Jason.decode!
+  @swagger @k8s_spec |> File.read!() |> Jason.decode!()
   @paths @swagger["paths"]
-  @operations @paths |> Enum.reduce([], fn {path, ops}, agg ->
-    operations =
-      ops
-      |> Enum.filter(fn({method, op}) ->
-        method != "parameters" &&
-        Map.has_key?(op, "x-kubernetes-group-version-kind") &&
-        op["x-kubernetes-action"] != "connect" &&
-        !Regex.match?(~r/\/watch\//, path) &&
-        !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, path)
-      end)
-      |> Enum.map(fn({method, op}) ->
-        path_params = (@paths[path]["parameters"] || [])
-        op_params = (op["parameters"] || [])
-        op
-        |> Map.put("http_method", method)
-        |> Map.put("path", path)
-        |> Map.put("parameters", path_params ++ op_params)
-      end)
+  @operations @paths
+              |> Enum.reduce([], fn {path, ops}, agg ->
+                operations =
+                  ops
+                  |> Enum.filter(fn {method, op} ->
+                    method != "parameters" &&
+                      Map.has_key?(op, "x-kubernetes-group-version-kind") &&
+                      op["x-kubernetes-action"] != "connect" &&
+                      !Regex.match?(~r/\/watch\//, path) &&
+                      !Regex.match?(~r/\/(finalize|bindings|approval|scale)$/, path)
+                  end)
+                  |> Enum.map(fn {method, op} ->
+                    path_params = @paths[path]["parameters"] || []
+                    op_params = op["parameters"] || []
 
-    agg ++ operations
-  end)
+                    op
+                    |> Map.put("http_method", method)
+                    |> Map.put("path", path)
+                    |> Map.put("parameters", path_params ++ op_params)
+                  end)
+
+                agg ++ operations
+              end)
 
   defp expected_path(path) do
     path
@@ -120,11 +123,19 @@ defmodule K8s.Client.RouterTest do
 
       path_action_to_test = apply(__MODULE__, String.to_atom(test_function), [op])
 
-      %{"version" => version, "group" => group, "kind" => kind} = op["x-kubernetes-group-version-kind"]
+      %{"version" => version, "group" => group, "kind" => kind} =
+        op["x-kubernetes-group-version-kind"]
 
       api_version = api_version(group, version)
       opts = path_opts(params)
       assert expected == Router.path_for(path_action_to_test, api_version, kind, opts)
+    end
+  end
+
+  describe "start/2" do
+    test "starts a named router" do
+      router_name = K8s.Client.Router.start("priv/swagger/1.10.json", :legacy)
+      assert router_name == :legacy
     end
   end
 end
