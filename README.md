@@ -1,5 +1,7 @@
 # K8s.Client
 
+K8s.Client is **deprecated** and has been merged into [`k8s` elixir client](https://github.com/coryodaniel/k8s).
+
 [K8s.Client](https://hexdocs.pm/k8s_client/readme.html) - Kubernetes client in elixir
 
 [![Build Status](https://travis-ci.org/coryodaniel/k8s_client.svg?branch=master)](https://travis-ci.org/coryodaniel/k8s_client)
